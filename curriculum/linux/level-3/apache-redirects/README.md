@@ -20,16 +20,20 @@ b.) Redirect http://www.stapp01.stratos.xfusioncorp.com:<Port>/blog/ to http://w
 
 sshpass -p Ir0nM@n ssh -o StrictHostKeyChecking=no tony@172.16.238.10
 
-cd /etc/httpd/conf.d
+cd /etc/httpd/conf
 
-sudo vi httpd.conf
 cat /etc/httpd/conf/httpd.conf | grep Listen
+sudo vi httpd.conf
 change Listen to 8083
+# Add ServerName to main config
+echo "ServerName stapp01.stratos.xfusioncorp.com" | sudo tee -a /etc/httpd/conf/httpd.conf
+
+cd /etc/httpd/conf.d
 
 vi xfusion.conf
 
 "
-NameVirtualHost *:8083
+ *:8083
 
 <VirtualHost *:8083>
     ServerName stapp01.stratos.xfusioncorp.com
@@ -42,13 +46,29 @@ NameVirtualHost *:8083
 </VirtualHost>
 "
 
-echo "Ir0nM@n" | sudo -S systemctl restart httpd
+sudo systemctl restart httpd
 
+sudo mkdir -p /var/www/html/news
+
+# If you have content in /blog/, you might want to copy it:
+sudo cp -r /var/www/html/blog/* /var/www/html/news/ 2>/dev/null || echo "index" | sudo tee /var/www/html/news/index.html
+
+# Set proper permissions
+sudo chown -R apache:apache /var/www/html/news
+sudo chmod -R 755 /var/www/html/news
+
+# Test configuration
+sudo httpd -t
+
+# Restart Apache
+sudo systemctl restart httpd
 
 # How to check
 curl -vL http://stapp01.stratos.xfusioncorp.com:8083
 
 curl -vL http://stapp01.stratos.xfusioncorp.com:8083/blog
+
+curl -vL http://stapp01.stratos.xfusioncorp.com:8083/news
 
 ```
 
